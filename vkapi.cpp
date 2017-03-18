@@ -49,6 +49,8 @@ void VkApi::execute(QString parameters)
         //return;
     }
     */
+    reply->deleteLater();
+    delete manager;
     replyParsed = true;
 }
 
@@ -87,7 +89,7 @@ void VkApi::getComments(QString& postId, QString count)
         return;
     }
     replyParsed = false;
-    execute("wall.getComments?owner_id="+ownerId+"&post_id="+postId+"&need_likes=0&offset=0&count="+count+"&v=5.62&access_token="+token);
+    execute("wall.getComments?owner_id="+ownerId+"&post_id="+postId+"&need_likes=1&offset=0&count="+count+"&v=5.62&access_token="+token);
     if (replyParsed) {
         jsonToComment(jsonResponse);
     }
@@ -128,7 +130,7 @@ void VkApi::jsonToVkpost(const JsonObject &result)
     audios.clear();
     likes.clear();
     shares.clear();
-    commentators.clear();
+    comments.clear();
 
     Vkpost* vkpost;
     /*
@@ -145,7 +147,7 @@ void VkApi::jsonToVkpost(const JsonObject &result)
         emit cyclePercent(int(((float)i/(float)items.size())*100));
 
         JsonObject head = items[i].toMap();
-
+        /*
         while (head["copy_history"].toList().size() > 0) { // skip reposts
             i++;
             emit message("Skip repost");
@@ -155,18 +157,21 @@ void VkApi::jsonToVkpost(const JsonObject &result)
             }
             head = items[i].toMap();
         }
-        while (endTime < head["date"].toUInt()) { // skip out of range posts
-            i++;
-            if (i>=items.size()) {
-                emit message("W: While skip by time: out of range");
+        */
+        if (endTime != 0)
+            while (endTime < head["date"].toUInt()) { // skip out of range posts
+                i++;
+                if (i>=items.size()) {
+                    emit message("W: While skip by time: out of range");
+                    return;
+                }
+                head = items[i].toMap();
+            }
+        if (startTime != 0)
+            if (startTime > head["date"].toUInt()) {
+                emit message("W: While time range: so early. Stop please");
                 return;
             }
-            head = items[i].toMap();
-        }
-        if (startTime > head["date"].toUInt()) {
-            emit message("W: While time range: so early. Stop please");
-            return;
-        }
 
         vkpost = new Vkpost(); // will be deleted in firecontrol
 
@@ -174,12 +179,15 @@ void VkApi::jsonToVkpost(const JsonObject &result)
         vkpost->from_id = head["from_id"].toString();
         vkpost->owner_id = head["owner_id"].toString();
         ownerId = vkpost->owner_id;                             // NB
-        vkpost->post_source = head["post_source"].toString();
+        //vkpost->post_source = head["post_source"].toString();
         vkpost->date = head["date"].toUInt();
         vkpost->post_type = head["post_type"].toString();
-        vkpost->text = head["text"].toString();
-
-        vkpost->comments = head["comments"].toMap()["count"].toInt();
+        if (head["copy_history"].toList().size() > 0) {
+            vkpost->text = "(REPOST) "+head["text"].toString();
+        } else {
+            vkpost->text = head["text"].toString();
+        }
+        vkpost->commentCount = head["comments"].toMap()["count"].toInt();
         vkpost->likes = head["likes"].toMap()["count"].toInt();
         vkpost->reposts = head["reposts"].toMap()["count"].toInt();
 
@@ -260,9 +268,10 @@ void VkApi::jsonToVkpost(const JsonObject &result)
 
         }
 /********************************COMMENTS***********************************/
-        if (vkpost->comments > 0) {
-            commentAudioComplete = false;
-            getComments(vkpost->id, QString::number(vkpost->comments));
+        if (vkpost->commentCount > 0) {
+            //commentAudioComplete = false;
+            getComments(vkpost->id, QString::number(vkpost->commentCount));
+            /*
             if (commentAudioComplete) {
                 for (int i = 0; i < audios.size(); ++i) {
                     vkpost->addNewTrack();
@@ -273,10 +282,14 @@ void VkApi::jsonToVkpost(const JsonObject &result)
                     vkpost->tracks.back().duration = audios[i].duration;
                 }
             }
+            */
         }
-        if (commentators.size() > 0) {
-            vkpost->commentators = commentators;
+        for ( int j = 0; j < comments.size(); ++j ) {
+            vkpost->addNewComment();
+            vkpost->comments.back().commentator = comments[j].commentator;
+            vkpost->comments.back().likes = comments[j].likes;
         }
+        comments.clear();
 /*********************************LIKES*************************************/
         if (vkpost->likes > 0) {
             getLikes(vkpost->id);
@@ -300,23 +313,14 @@ void VkApi::jsonToComment(const JsonObject &result)
     JsonObject jsonObject = result["response"].toMap();
     JsonArray items = jsonObject["items"].toList();
 
-    bool nonAlbumComment = false;
+    //bool nonAlbumComment = false;
     for (int i = 0; i < items.size(); i++) { // items size - количество комментариев в ответе, но это не точно
         JsonObject head = items[i].toMap();
-
-/*
-        vkpost->id = head["id"].toString();
-        vkpost->from_id = head["from_id"].toString();
-        vkpost->post_source = head["post_source"].toString();
-        vkpost->date = head["date"].toUInt();
-        vkpost->post_type = head["post_type"].toString();
-        vkpost->text = head["text"].toString();
-
-        vkpost->comments = head["comments"].toMap()["count"].toInt();
-        vkpost->likes = head["likes"].toMap()["count"].toInt();
-        vkpost->reposts = head["reposts"].toMap()["count"].toInt();
-*/
-        commentators.push_back(head["from_id"].toString());
+        JsonObject likes = head["likes"].toMap();
+        comment.likes = likes["count"].toInt();
+        comment.commentator = head["from_id"].toString();
+        comments.push_back(comment);
+        /*
         if (head["from_id"].toString() != ownerId)
             nonAlbumComment = true;
         if (!nonAlbumComment) {
@@ -335,9 +339,12 @@ void VkApi::jsonToComment(const JsonObject &result)
                 }
             }
         }
+        */
     }
+    /*
     if (audios.size() > 0)
         commentAudioComplete = true;
+    */
 }
 
 void VkApi::jsonToLikes(const JsonObject &result)

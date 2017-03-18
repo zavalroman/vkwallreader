@@ -42,6 +42,12 @@ public:
         QString ext, url, access_key;
     } doc;
 
+    struct Comment {
+        QString commentator;
+        //QString text;
+        int likes;
+    } comment;
+
     QString id, from_id, owner_id, post_source;
     unsigned int date;
     QString post_type;
@@ -52,17 +58,18 @@ public:
     QList<Audio> tracks;
     QList<Doc> docs;
 
-    int comments, likes, reposts;
+    int commentCount, likes, reposts;
 
     bool photo_post, poll_post, audio_post;
 
-    QList<QString> commentators;
+    QList<Comment> comments;
     QList<QString> whoLikes;
     QList<QString> whoShared;
 
     void addNewPhoto();
     void addNewTrack();
     void addNewDoc();
+    void addNewComment();
 
 private:
 

@@ -33,7 +33,7 @@ void Firecontrol::vkpostToDb(Vkpost* vkpost)
     textPrepare(&vkpost->text);
     statement = "INSERT INTO vkpost(vk_id,vkgroup_id,unix_time,post_text,likes,reposts,comments,photo_count,audio_count) "
                         "VALUES ('"+vkpost->id+"',"+QString::number(index.at(0))+","+QString::number(vkpost->date)+",'"+vkpost->text+"',"+QString::number(vkpost->likes)+","+QString::number(vkpost->reposts)+
-                        ","+QString::number(vkpost->comments)+","+QString::number(vkpost->photos.size())+","+QString::number(vkpost->tracks.size())+")";
+                        ","+QString::number(vkpost->comments.size())+","+QString::number(vkpost->photos.size())+","+QString::number(vkpost->tracks.size())+")";
     fb.query(statement);
 
     index.clear();
@@ -56,8 +56,8 @@ void Firecontrol::vkpostToDb(Vkpost* vkpost)
                                 "','"+vkpost->tracks[j].title+"',"+QString::number(index.at(0))+")";
         fb.query(statement);
     }
-    for (int j = 0; j < vkpost->commentators.size(); ++j) {
-        statement = "INSERT INTO comments(vkpost_id,commentator) VALUES("+QString::number(index.at(0))+",'"+vkpost->commentators.at(j)+"')";
+    for (int j = 0; j < vkpost->comments.size(); ++j) {
+        statement = "INSERT INTO comments(vkpost_id,commentator,likes) VALUES("+QString::number(index.at(0))+",'"+vkpost->comments[j].commentator+"',"+QString::number(vkpost->comments[j].likes)+")";
         fb.query(statement);
     }
     for (int j = 0; j < vkpost->docs.size(); ++j) {

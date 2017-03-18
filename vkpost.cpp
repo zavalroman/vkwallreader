@@ -23,3 +23,8 @@ void Vkpost::addNewDoc()
 {
     docs.push_back(doc);
 }
+
+void Vkpost::addNewComment()
+{
+    comments.push_back(comment);
+}

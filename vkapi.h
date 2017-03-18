@@ -30,6 +30,7 @@ public:
     void delay(int msec) const;
     void wallGet(QString& cycles, QString& strOffset, QString& count);
     void getDoc(QString& docs);
+
 signals:
     void vkPostReceived(Vkpost*);
     void message(QString);
@@ -46,6 +47,12 @@ private:
         int duration;
     } audio;
 
+    struct Comment {
+        QString commentator;
+        //QString text;
+        int likes;
+    } comment;
+
     bool scanStop, replyParsed;
     bool commentAudioComplete;
 
@@ -58,7 +65,7 @@ private:
     QList<Audio> audios;
     QList<QString> likes;
     QList<QString> shares;
-    QList<QString> commentators;
+    QList<Comment> comments;
 
     void jsonToVkpost(const JsonObject &result);
     void jsonToComment(const JsonObject &result);

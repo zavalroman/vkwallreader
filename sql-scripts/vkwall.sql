@@ -1,6 +1,5 @@
 /*
-*
-* vkdoujinmusic.fdb
+
 *
 */
 
@@ -78,6 +77,7 @@ CREATE TABLE comments
 	id INTEGER,
 	vkpost_id INTEGER,
 	commentator VARCHAR(20),
+	likes INTEGER,
 	
 	FOREIGN KEY ( vkpost_id ) REFERENCES vkpost ( id ),
 	PRIMARY KEY ( id )
