@@ -37,6 +37,8 @@ private slots:
 
     void on_wallStopButton_clicked();
 
+    void on_parseStartButton_clicked();
+
 private:
     Ui::Interface *ui;
 

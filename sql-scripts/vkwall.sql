@@ -77,6 +77,7 @@ CREATE TABLE comments
 	id INTEGER,
 	vkpost_id INTEGER,
 	commentator VARCHAR(20),
+	text VARCHAR(1000),
 	likes INTEGER,
 	
 	FOREIGN KEY ( vkpost_id ) REFERENCES vkpost ( id ),

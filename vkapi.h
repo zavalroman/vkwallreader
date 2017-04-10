@@ -27,6 +27,13 @@ public:
         startTime = start;
         endTime = end;
     }
+    void setAdminCommentAudio() {
+        adminCommentAudio = true;
+    }
+    void setCommentText() {
+        needCommentText = true;
+    }
+
     void delay(int msec) const;
     void wallGet(QString& cycles, QString& strOffset, QString& count);
     void getDoc(QString& docs);
@@ -49,7 +56,7 @@ private:
 
     struct Comment {
         QString commentator;
-        //QString text;
+        QString text;
         int likes;
     } comment;
 
@@ -58,6 +65,7 @@ private:
 
     QString ownerId, domain, token;
     uint startTime, endTime;
+    bool adminCommentAudio, needCommentText;
     JsonObject jsonResponse;
     JsonArray jsonTracks; // ?
     int gottenCount;

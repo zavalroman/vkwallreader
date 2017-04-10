@@ -34,7 +34,8 @@ SOURCES += main.cpp\
     firecontrol.cpp \
     ../ibpp/core/all_in_one.cpp \
     setpathdialog.cpp \
-    downloader.cpp
+    downloader.cpp \
+    doujinmusicparse.cpp
 
 HEADERS  += interface.h \
     login.h \
@@ -45,7 +46,8 @@ HEADERS  += interface.h \
     vkapi.h \
     firecontrol.h \
     setpathdialog.h \
-    downloader.h
+    downloader.h \
+    doujinmusicparse.h
 
 FORMS    += interface.ui \
     login.ui \

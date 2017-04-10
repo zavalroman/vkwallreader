@@ -15,7 +15,7 @@ void Firecontrol::textPrepare(QString *text)
             i++;
         }
         if (text->at(i) == 10)
-            text->replace(i,1," "); //заменяем перенос строки пробелом
+            text->replace(i,1,"%%"); //заменяем перенос строки двумя процентами
     }
 }
 
@@ -26,6 +26,7 @@ void Firecontrol::vkpostToDb(Vkpost* vkpost)
 
     QString statement = "SELECT id FROM vkgroup WHERE vk_id = '"+vkpost->from_id+"'";
     fb.query(statement, &index);
+
     if (index.size() == 0) {
         qDebug() << "ERROR: IN DB GROUP NOT EXIST";
         return;
@@ -57,7 +58,7 @@ void Firecontrol::vkpostToDb(Vkpost* vkpost)
         fb.query(statement);
     }
     for (int j = 0; j < vkpost->comments.size(); ++j) {
-        statement = "INSERT INTO comments(vkpost_id,commentator,likes) VALUES("+QString::number(index.at(0))+",'"+vkpost->comments[j].commentator+"',"+QString::number(vkpost->comments[j].likes)+")";
+        statement = "INSERT INTO comments(vkpost_id,commentator,text,likes) VALUES("+QString::number(index.at(0))+",'"+vkpost->comments[j].commentator+"','"+vkpost->comments[j].text+"',"+QString::number(vkpost->comments[j].likes)+")";
         fb.query(statement);
     }
     for (int j = 0; j < vkpost->docs.size(); ++j) {

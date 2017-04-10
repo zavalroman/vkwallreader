@@ -12,6 +12,8 @@ VkApi::VkApi(QObject *parent) : QObject(parent)
     domain = "";
     startTime = 0;
     endTime = 0;
+    adminCommentAudio = false;
+    needCommentText = false;
 }
 
 void VkApi::delay(int msec) const
@@ -269,24 +271,25 @@ void VkApi::jsonToVkpost(const JsonObject &result)
         }
 /********************************COMMENTS***********************************/
         if (vkpost->commentCount > 0) {
-            //commentAudioComplete = false;
+            commentAudioComplete = false;
             getComments(vkpost->id, QString::number(vkpost->commentCount));
-            /*
-            if (commentAudioComplete) {
-                for (int i = 0; i < audios.size(); ++i) {
-                    vkpost->addNewTrack();
-                    vkpost->tracks.back().id = audios[i].id;
-                    vkpost->tracks.back().owner_id = audios[i].owner_id;
-                    vkpost->tracks.back().artist = audios[i].artist;
-                    vkpost->tracks.back().title = audios[i].title;
-                    vkpost->tracks.back().duration = audios[i].duration;
+            if (adminCommentAudio) {
+                if (commentAudioComplete) {
+                    for (int i = 0; i < audios.size(); ++i) {
+                        vkpost->addNewTrack();
+                        vkpost->tracks.back().id = audios[i].id;
+                        vkpost->tracks.back().owner_id = audios[i].owner_id;
+                        vkpost->tracks.back().artist = audios[i].artist;
+                        vkpost->tracks.back().title = audios[i].title;
+                        vkpost->tracks.back().duration = audios[i].duration;
+                    }
                 }
             }
-            */
         }
         for ( int j = 0; j < comments.size(); ++j ) {
             vkpost->addNewComment();
             vkpost->comments.back().commentator = comments[j].commentator;
+            vkpost->comments.back().text = comments[j].text;
             vkpost->comments.back().likes = comments[j].likes;
         }
         comments.clear();
@@ -319,11 +322,14 @@ void VkApi::jsonToComment(const JsonObject &result)
         JsonObject likes = head["likes"].toMap();
         comment.likes = likes["count"].toInt();
         comment.commentator = head["from_id"].toString();
+        if (needCommentText) {
+            comment.text = head["text"].toString();
+        } else {
+            comment.text = "";
+        }
         comments.push_back(comment);
-        /*
-        if (head["from_id"].toString() != ownerId)
-            nonAlbumComment = true;
-        if (!nonAlbumComment) {
+
+        if (head["from_id"].toString() == ownerId) {
             JsonArray attachments = head["attachments"].toList();
             foreach (QVariant attachment, attachments) {
                 if (attachment.toMap()["type"].toString() == "audio") {
@@ -339,7 +345,6 @@ void VkApi::jsonToComment(const JsonObject &result)
                 }
             }
         }
-        */
     }
     /*
     if (audios.size() > 0)

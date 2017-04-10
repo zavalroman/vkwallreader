@@ -70,6 +70,12 @@ void Interface::on_requestButton_clicked()
     if (ui->timeRangeCheck->isChecked()) {
         vk.setTimeRange(startTime, endTime);
     }
+    if (ui->commentAudioBox->isChecked()) {
+        vk.setAdminCommentAudio();
+    }
+    if (ui->commentTextBox->isChecked()) {
+        vk.setCommentText();
+    }
     vk.wallGet(cycles, offset, count);
 }
 
@@ -190,4 +196,9 @@ void Interface::on_stopButton_clicked()
 void Interface::on_wallStopButton_clicked()
 {
     emit stopScanWall();
+}
+
+void Interface::on_parseStartButton_clicked()
+{
+
 }

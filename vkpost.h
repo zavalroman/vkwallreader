@@ -44,7 +44,7 @@ public:
 
     struct Comment {
         QString commentator;
-        //QString text;
+        QString text;
         int likes;
     } comment;
 
