@@ -12,6 +12,7 @@
 #include "vkpost.h"
 #include "setpathdialog.h"
 #include "downloader.h"
+#include "doujinmusicparser.h"
 
 Interface::Interface(QWidget *parent) :
     QMainWindow(parent),
@@ -200,5 +201,10 @@ void Interface::on_wallStopButton_clicked()
 
 void Interface::on_parseStartButton_clicked()
 {
+    int rangeFrom = ui->rangeFrom->text().toInt();
+    int rangeTo = ui->rangeTo->text().toInt();
+    int epoch = ui->epochEdit->text().toInt();
 
+    DoujinmusicParser parser;
+    parser.postsParseStart(rangeFrom, rangeTo, epoch);
 }
