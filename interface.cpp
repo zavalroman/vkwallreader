@@ -205,6 +205,6 @@ void Interface::on_parseStartButton_clicked()
     int rangeTo = ui->rangeTo->text().toInt();
     int epoch = ui->epochEdit->text().toInt();
 
-    DoujinmusicParser parser;
+    DoujinmusicParser parser(this);
     parser.postsParseStart(rangeFrom, rangeTo, epoch);
 }

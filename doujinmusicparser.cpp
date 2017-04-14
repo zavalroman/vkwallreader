@@ -2,14 +2,26 @@
 #include <QDebug>
 #include <QRegularExpression>
 #include <QRegularExpressionMatch>
+#include <QEventLoop>
 
 #include "../ibpp/tests/C++/qt-firebird.h"
 
 #include "doujinmusicparser.h"
+#include "mismatch.h"
 
-DoujinmusicParser::DoujinmusicParser(QObject *parent) : QObject(parent)
+DoujinmusicParser::DoujinmusicParser(QObject *parent, Interface* mainWindow) : QObject(parent)
 {
+    root = mainWindow;
+}
 
+void DoujinmusicParser::textPrepare(QString *text)
+{
+    for ( int i = 0; i < text->size(); i++) {
+        if (text->at(i) == 39) {
+            text->insert(i, 39); //экранируем апостроф
+            i++;
+        }
+    }
 }
 
 void DoujinmusicParser::postsParseStart(int rangeFrom, int rangeTo, int epoch)
@@ -19,8 +31,14 @@ void DoujinmusicParser::postsParseStart(int rangeFrom, int rangeTo, int epoch)
     QList<int> intList;
     int id;
     bool openMismatch = false;
-
     QString event, tag_event, tag_genre, circle, album, disc, part, other;
+    Mismatch *mismatch;
+    int audio_count = 0;
+    QString event_save, circle_save, album_save;
+
+    QStringList albumBuffer;
+    QList<int> albumPostId;
+    QList<int> acount;
 
     QString statement = "SELECT post_text FROM vkpost WHERE id BETWEEN "+QString::number(rangeFrom)+" AND "+QString::number(rangeTo);
     fb.query(statement, &textList);
@@ -122,5 +140,175 @@ Bassy - ワンダー・フルワールド.rar1
         qDebug() << "match (part)  :" << part;
         qDebug() << "match (other) :" << other;
 
+        re.setPattern( "\\s+[-–—]\\s+" ); //проверка для случая, если альбом и круг не в том месте разделены
+        match = re.match(album);
+        if (circle.size() == 0 || album.size() == 0 || match.hasMatch()) {
+            openMismatch = true;
+        }
+        if (openMismatch) {
+            mismatch = new Mismatch(root, &fb, post_text, id);
+            if (mismatch->exec()) {
+                event = mismatch->correctEvent;
+                circle = mismatch->correctCircle;
+                album = mismatch->correctAlbum;
+                disc = mismatch->correctDisc;
+                part = mismatch->correctPart;
+            }
+            delete mismatch;
+        }
+        textPrepare(&event);
+        textPrepare(&circle);
+        textPrepare(&album);
+
+        if (albumBuffer.size() > 0 && !album.contains(albumBuffer.back().left(3))) {
+            if ( audio_count>0 ) {
+                trackInsertPrepare(&fb, &albumPostId, audio_count, event_save, circle_save, album_save);
+            } else { qDebug() << "ALBUM HAS NO ANY TRACKS"; }
+            audio_count = 0;
+            albumBuffer.clear();
+            albumPostId.clear();
+        }
+
+        albumBuffer.push_back(album);
+        statement = "SELECT audio_count FROM vkpost WHERE id = " + QString::number(id);
+        fb.query(statement, &acount);
+
+        if (acount.size() > 0 && acount.at(0) > 0) {
+            albumPostId.push_back(id);
+            audio_count += acount.at(0);
+        } else {
+            qDebug() << "SOME TRUBLES";
+        }
+        if (event.size() > 0)
+            event_save = event;
+        if (circle.size() > 0)
+            circle_save = circle;
+        if (album.size() > 0)
+            album_save = album;
+        //final
+        id++;
     } // foreach
+}
+
+int DoujinmusicParser::getPostDuration(Firebird *fb, int id)
+{
+    int total = 0;
+    QList<int> durations;
+    QString statement = "SELECT duration FROM vktrack INNER JOIN vkpostxvktrack ON vktrack.id = vkpostxvktrack.vktrack_id WHERE vkpostxvktrack.vkpost_id = " + QString::number(id);
+    fb->query(statement, &durations);
+    for (int i = 0; i < durations.size(); i++) {
+        total += durations.at(i);
+    }
+    return total;
+}
+
+void DoujinmusicParser::trackInsertPrepare(Firebird *fb, QList<int>* albumPostId, int audio_count, QString &event, QString &circle, QString &album)
+{
+    QString statement;
+    QList<int> index;
+    QStringList textList;
+    int duration = 0;
+
+    if (audio_count == 0 || albumPostId->size() == 0) {
+        qDebug() << "0 TRACKS! return";
+        return;
+    }
+
+    /*************************************GET DURATION**************************************/
+    for (int i = 0; i < albumPostId->size(); i++)
+        duration += getPostDuration(fb, albumPostId->at(i));
+
+    /**************************************GET EVENT****************************************/
+    int event_id;
+    if (event.size()>2) {
+        statement = "SELECT id FROM event WHERE name = '" + event.split("#")[1] + "'";
+        fb->query(statement,&index);
+        if (index.size()==0) {
+            statement = "INSERT INTO event(name) VALUES ('" + event.split("#")[1] +"')";
+            fb->query(statement);
+            statement = "SELECT MAX(id) FROM event";
+            fb->query(statement,&index);
+        }
+        event_id = index.at(0);
+    } else {
+        event_id = 1; // id1 = null
+    }
+
+    /***************************************GET CIRCLE******************************************/
+    statement = "SELECT id FROM circle WHERE name_unic = '" + circle + "'";
+    fb->query(statement,&index);
+    if (index.size()==0) {
+        statement = "SELECT id FROM circle WHERE name_roma = '" + circle + "'";
+        fb->query(statement,&index);
+        if (index.size()==0) {
+            statement = "INSERT INTO circle(name_unic) VALUES('" + circle + "')";
+            fb->query(statement);
+            statement = "SELECT MAX(id) FROM circle";
+            fb->query(statement,&index);
+        }
+    }
+    int circle_id = index.at(0);
+
+    /**************************************INSERT ALBUM****************************************/
+    QList<int> unix_time; //int: 2 147 483 647 -- 19th January 2038 03:14:07 AM
+    statement = "SELECT unix_time FROM vkpost WHERE id = " + QString::number(albumPostId->at(0));
+    fb->query(statement, &unix_time);
+    statement = "INSERT INTO ALBUM(title_unic,circle_id,track_count,duration,event_id,vktime) "
+                        "VALUES ('" + album + "'," + QString::number(circle_id) + "," + QString::number(audio_count) + "," + QString::number(duration) + "," + QString::number(event_id) + "," + QString::number(unix_time.at(0)) + ")";
+    fb->query(statement);
+    statement = "SELECT MAX(id) FROM album";
+    fb->query(statement, &index);
+    int album_id = index.at(0);
+    album_id_global = album_id;
+
+    qDebug() << "STEP 5.5";
+    /***********************************DOWNLOAD COVER****************************************/
+    QEventLoop loop;
+    statement = "SELECT photo_604 FROM vkphoto WHERE id = " + QString::number(albumPostId->at(0));
+    if (fb->query(statement, &textList) && textList.size() > 0) {
+        qDebug() << "image url" << textList[0];
+        QUrl url(textList[0]);
+        QNetworkRequest request(url);
+        QNetworkAccessManager *manager = new QNetworkAccessManager(this);
+        qDebug() << "DOWNLOAD BEGIN";
+        manager->get(request);
+        connect(manager, SIGNAL(finished(QNetworkReply*)), this, SLOT(photoDownloadFinished(QNetworkReply*)));
+        connect(this, SIGNAL(photoSaved()), &loop, SLOT(quit()));
+    } else { qDebug() << "sql query error"; }
+
+     /**************************************INSERT TRACK****************************************/
+    for (int i = 0; i < albumPostId->size(); i++) {
+        statement = "SELECT vktrack.id FROM vktrack INNER JOIN vkpostxvktrack ON vktrack.id = vkpostxvktrack.vktrack_id WHERE vkpostxvktrack.vkpost_id = " + QString::number(albumPostId->at(i));
+        fb->query(statement,&index);
+        qDebug() <<"album post id =" << albumPostId->at(i);
+        if (index.size()==0) {
+            qDebug() << "POST HAS NO TRACKS? break";
+            break;
+        }
+        for (int j = 0; j < index.size(); j++)
+            trackInsert(fb, index.at(j), album_id, circle_id);
+    }
+
+    loop.exec(); //wait for end download cover
+}
+
+void DoujinmusicParser::trackInsert(Firebird* fb, int vktrack_id, int album_id, int circle_id)
+{
+    QString statement;
+    QStringList textList;
+    QList<int> intList;
+    int duration;
+
+    statement = "SELECT duration FROM vktrack WHERE id = " + QString::number(vktrack_id);
+    fb->query(statement, &intList);
+    duration = intList.at(0);
+
+    statement = "SELECT title FROM vktrack WHERE id = " + QString::number(vktrack_id);
+    fb->query(statement,&textList);
+    QString track_title = textList.at(0);
+
+    textPrepare(&track_title);
+
+    statement = "INSERT INTO track(vktrack_id,title_unic,album_id,circle_id,duration) VALUES("+QString::number(vktrack_id)+",'"+track_title+"',"+QString::number(album_id)+","+QString::number(circle_id)+","+QString::number(duration)+")";
+    fb->query(statement);
 }

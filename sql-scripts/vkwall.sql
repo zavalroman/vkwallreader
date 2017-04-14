@@ -99,3 +99,87 @@ CREATE TABLE vkdoc
 	FOREIGN KEY ( vkpost_id ) REFERENCES vkpost ( id ),
 	PRIMARY KEY ( id )	
 );
+
+CREATE TABLE eventtype
+(
+	id INTEGER,
+	title VARCHAR(100),
+	--link_id INTEGER,
+	
+	--FOREIGN KEY ( link_id ) REFERENCES link ( id ),
+	PRIMARY KEY ( id )
+);
+
+CREATE TABLE event
+(
+	id INTEGER,
+	name VARCHAR(100),
+	type_id INTEGER,
+	occured CHAR(6), --format yymmdd
+	--link_id INTEGER,
+	
+	FOREIGN KEY ( type_id ) REFERENCES eventtype ( id ),
+	--FOREIGN KEY ( link_id ) REFERENCES link ( id ),
+	PRIMARY KEY ( id )
+);
+
+CREATE TABLE circle
+(
+	id INTEGER,
+	name_unic VARCHAR(100),
+	name_roma VARCHAR(100),
+	--link_id INTEGER,
+
+	--FOREIGN KEY ( link_id ) REFERENCES link ( id ),
+	PRIMARY KEY ( id )
+);
+
+CREATE TABLE album
+(
+	id INTEGER,
+	title_unic VARCHAR(100),
+	title_roma VARCHAR(100),
+	circle_id INTEGER,
+	track_count SMALLINT,
+	duration INTEGER,
+	catalog_n VARCHAR(100),
+	event_id INTEGER,
+	--link_id INTEGER,
+	vktime DECIMAL,
+	
+	FOREIGN KEY ( circle_id ) REFERENCES circle ( id ),
+	FOREIGN KEY ( event_id )  REFERENCES event  ( id ),
+	--FOREIGN KEY ( link_id )   REFERENCES link   ( id ),
+	PRIMARY KEY ( id )
+);
+
+CREATE TABLE fandom
+(
+	id INTEGER,
+	name VARCHAR(100),
+	--link_id INTEGER,
+	
+	PRIMARY KEY ( id )
+);
+
+CREATE TABLE track
+(
+	id INTEGER,
+	vktrack_id INTEGER,
+	--title_id INTEGER,
+	title_unic VARCHAR(100),
+	title_roma VARCHAR(100),
+	album_id INTEGER,
+	circle_id INTEGER,
+	fandom_id INTEGER,
+	duration INTEGER,
+	bpm SMALLINT,
+	
+	FOREIGN KEY ( vktrack_id ) REFERENCES vktrack ( id ),
+	--FOREIGN KEY ( title_id ) REFERENCES translit ( id ),
+	FOREIGN KEY ( album_id )  REFERENCES album  ( id ),
+	FOREIGN KEY ( circle_id ) REFERENCES circle ( id ),
+	FOREIGN KEY ( fandom_id ) REFERENCES fandom ( id ),
+	
+	PRIMARY KEY ( id )
+);

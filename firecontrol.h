@@ -14,14 +14,14 @@ public:
 
     void getDocId(QString rangeBegin, QString rangeEnd, QList<QStringList> *docId);
     bool postExist(QString& postId);
-
+    void textPrepare(QString *text) const;
 signals:
 
 public slots:
     void vkpostToDb(Vkpost*);
 
 private:
-    void textPrepare(QString *text);
+
 };
 
 #endif // FIRECONTROL_H

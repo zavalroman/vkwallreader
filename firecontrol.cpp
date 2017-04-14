@@ -7,7 +7,7 @@ Firecontrol::Firecontrol(QObject *parent) : QObject(parent)
 
 }
 
-void Firecontrol::textPrepare(QString *text)
+void Firecontrol::textPrepare(QString *text) const
 {
     for ( int i = 0; i < text->size(); i++) {
         if (text->at(i) == 39) {
