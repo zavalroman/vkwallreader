@@ -3,6 +3,7 @@
 #include <QRegularExpression>
 #include <QRegularExpressionMatch>
 #include <QEventLoop>
+#include <QFile>
 
 #include "../ibpp/tests/C++/qt-firebird.h"
 
@@ -291,6 +292,31 @@ void DoujinmusicParser::trackInsertPrepare(Firebird *fb, QList<int>* albumPostId
 
     loop.exec(); //wait for end download cover
 }
+
+void DoujinmusicParser::photoDownloadFinished(QNetworkReply *reply)
+{
+    if (reply->error() != QNetworkReply::NoError) {
+        qDebug() << reply->errorString();
+        return;
+    }
+    QVariant attribute = reply->attribute(QNetworkRequest::RedirectionTargetAttribute);
+    if (attribute.isValid()) {
+        QUrl url = attribute.toUrl();
+        qDebug() << "must go to:" << url;
+        return;
+    }
+    //qDebug() << "Content type:" << reply->header(QNetworkRequest::ContentTypeHeader).toString();
+    QByteArray jpegData = reply->readAll();
+    QPixmap pixmap;
+    pixmap.loadFromData(jpegData);
+    QFile file("covers/" + QString::number(album_id_global));
+    file.open(QIODevice::WriteOnly);
+
+    pixmap.save(&file, "jpg");
+    file.close();
+    emit photoSaved();
+}
+
 
 void DoujinmusicParser::trackInsert(Firebird* fb, int vktrack_id, int album_id, int circle_id)
 {

@@ -15,8 +15,10 @@ public:
     void postsParseStart(int rangeFrom, int rangeTo, int epoch);
 
 signals:
+    void photoSaved();
 
 public slots:
+    void photoDownloadFinished(QNetworkReply*);
 
 private:
     int album_id_global; //for photo name
