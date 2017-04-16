@@ -35,7 +35,7 @@ void DoujinmusicParser::postsParseStart(int rangeFrom, int rangeTo, int epoch)
     QString event, tag_event, tag_genre, circle, album, disc, part, other;
     Mismatch *mismatch;
     int audio_count = 0;
-    QString event_save, circle_save, album_save;
+    QString event_save, circle_save, album_save, genre_save;
 
     QStringList albumBuffer;
     QList<int> albumPostId;
@@ -125,7 +125,8 @@ Bassy - ワンダー・フルワールド.rar1
             break;
         }
         case 3: {
-            re.setPattern("^\\[(.+)\\]\\s+(#[^\\s]+@doujinmusic)\\s*%%(.+)%%(.+)\\s+[-–—]\\s+(.+)\\s*(\\([Pp]art\\s\\d+\\)).*?$");
+            //re.setPattern("^\\[(.+)\\]\\s+(#[^\\s]+@doujinmusic)\\s*%%(.+)%%(.+)\\s+[-–—]\\s+(.+)\\s?(\\([Pp]art\\s\\d+\\))?.*$");
+            re.setPattern( "^\\[(.+)\\]\\s+(#[^\\s]+@doujinmusic)\\s*%%(.+)%%(.+)\\s+[-–—]\\s+(.+?)\\s*(\\([Pp]art\\s\\d+\\))?\\s*[.]*?$" );
             match = re.match(post_text);
             if (match.hasMatch()) {
                 event     = match.captured(1);
@@ -149,7 +150,7 @@ Bassy - ワンダー・フルワールド.rar1
         if (openMismatch) {
             qDebug() << "mismatch";
         }
-
+        /*
         re.setPattern( "\\s+[-–—]\\s+" ); //проверка для случая, если альбом и круг не в том месте разделены
         match = re.match(album);
         if (circle.size() == 0 || album.size() == 0 || match.hasMatch()) {
@@ -172,7 +173,7 @@ Bassy - ワンダー・フルワールド.rar1
 
         if (albumBuffer.size() > 0 && !album.contains(albumBuffer.back().left(3))) {
             if ( audio_count>0 ) {
-                trackInsertPrepare(&fb, &albumPostId, audio_count, event_save, circle_save, album_save);
+                trackInsertPrepare(&fb, &albumPostId, audio_count, event_save, circle_save, album_save, genre_save);
             } else { qDebug() << "ALBUM HAS NO ANY TRACKS"; }
             audio_count = 0;
             albumBuffer.clear();
@@ -195,8 +196,10 @@ Bassy - ワンダー・フルワールド.rar1
             circle_save = circle;
         if (album.size() > 0)
             album_save = album;
+        if (tag_genre.size() > 0)
+            genre_save = tag_genre;
         //final
-
+        */
         id++;
     } // foreach
 }
@@ -213,7 +216,7 @@ int DoujinmusicParser::getPostDuration(Firebird *fb, int id)
     return total;
 }
 
-void DoujinmusicParser::trackInsertPrepare(Firebird *fb, QList<int>* albumPostId, int audio_count, QString &event, QString &circle, QString &album)
+void DoujinmusicParser::trackInsertPrepare(Firebird *fb, QList<int>* albumPostId, int audio_count, QString &event, QString &circle, QString &album, QString &genre)
 {
     QString statement;
     QList<int> index;

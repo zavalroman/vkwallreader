@@ -26,7 +26,7 @@ private:
     void textPrepare(QString*);
     Interface* root;
     int getPostDuration(Firebird* fb, int id);
-    void trackInsertPrepare(Firebird* fb, QList<int>* albumPostId, int audio_count, QString &event, QString &circle, QString &album);
+    void trackInsertPrepare(Firebird* fb, QList<int>* albumPostId, int audio_count, QString &event, QString &circle, QString &album, QString &genre);
     void trackInsert(Firebird* fb, int vktrack_id, int album_id, int circle_id);
 };
 
