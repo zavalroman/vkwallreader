@@ -31,26 +31,6 @@ CREATE TABLE vkpost
 	PRIMARY KEY ( id )
 );
 
-CREATE TABLE vktrack
-(
-	id INTEGER,
-	vk_id VARCHAR(50),
-	--from_id VARCHAR(50),
-	to_id VARCHAR(50), --owner_id
-	artist VARCHAR(200),
-	title VARCHAR(300),
-	--duration INTEGER,
-	--unix_time DECIMAL, --iru ka
-	--url VARCHAR(100),
-	--lyrics_id VARCHAR(50),
-	--vkalbum_id INTEGER,
-	--vkgenre_id INTEGER,
-	vkpost_id INTEGER,
-
-	FOREIGN KEY ( vkpost_id ) REFERENCES  vkpost ( id ),
-	PRIMARY KEY ( id )
-);
-
 CREATE TABLE vkphoto
 (
 	id INTEGER,
@@ -164,22 +144,29 @@ CREATE TABLE fandom
 
 CREATE TABLE track
 (
-	id INTEGER,
-	vktrack_id INTEGER,
-	--title_id INTEGER,
-	title_unic VARCHAR(100),
-	title_roma VARCHAR(100),
-	album_id INTEGER,
-	circle_id INTEGER,
-	fandom_id INTEGER,
-	duration INTEGER,
-	bpm SMALLINT,
+	id 			INTEGER,
+	vk_id 		VARCHAR(50),
+	--from_id VARCHAR(50),
+	to_id 		VARCHAR(50), --owner_id
+	artist 		VARCHAR(500),
+	title 		VARCHAR(500),
+	artist_roma VARCHAR(500),
+	title_roma	VARCHAR(500),
+	album_id	INTEGER,
+	circle_id	INTEGER,
+	fandom_id	INTEGER,
+	duration 	INTEGER,
+	bmp			INTEGER,
+	--unix_time DECIMAL, --iru ka
+	--lyrics_id VARCHAR(50),
+	--vkalbum_id INTEGER,
+	--vkgenre_id INTEGER,
 	
-	FOREIGN KEY ( vktrack_id ) REFERENCES vktrack ( id ),
-	--FOREIGN KEY ( title_id ) REFERENCES translit ( id ),
+	vkpost_id INTEGER,
+
 	FOREIGN KEY ( album_id )  REFERENCES album  ( id ),
 	FOREIGN KEY ( circle_id ) REFERENCES circle ( id ),
 	FOREIGN KEY ( fandom_id ) REFERENCES fandom ( id ),
-	
+	FOREIGN KEY ( vkpost_id ) REFERENCES vkpost ( id ),
 	PRIMARY KEY ( id )
 );
