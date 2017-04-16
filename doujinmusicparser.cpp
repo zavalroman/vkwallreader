@@ -150,7 +150,7 @@ Bassy - ワンダー・フルワールド.rar1
         if (openMismatch) {
             qDebug() << "mismatch";
         }
-        /*
+
         re.setPattern( "\\s+[-–—]\\s+" ); //проверка для случая, если альбом и круг не в том месте разделены
         match = re.match(album);
         if (circle.size() == 0 || album.size() == 0 || match.hasMatch()) {
@@ -199,7 +199,7 @@ Bassy - ワンダー・フルワールド.rar1
         if (tag_genre.size() > 0)
             genre_save = tag_genre;
         //final
-        */
+
         id++;
     } // foreach
 }
@@ -208,7 +208,7 @@ int DoujinmusicParser::getPostDuration(Firebird *fb, int id)
 {
     int total = 0;
     QList<int> durations;
-    QString statement = "SELECT duration FROM vktrack INNER JOIN vkpostxvktrack ON vktrack.id = vkpostxvktrack.vktrack_id WHERE vkpostxvktrack.vkpost_id = " + QString::number(id);
+    QString statement = "SELECT duration FROM track WHERE vkpost_id = " + QString::number(id);
     fb->query(statement, &durations);
     for (int i = 0; i < durations.size(); i++) {
         total += durations.at(i);
@@ -235,10 +235,10 @@ void DoujinmusicParser::trackInsertPrepare(Firebird *fb, QList<int>* albumPostId
     /**************************************GET EVENT****************************************/
     int event_id;
     if (event.size()>2) {
-        statement = "SELECT id FROM event WHERE name = '" + event.split("#")[1] + "'";
+        statement = "SELECT id FROM event WHERE name = '" + event + "'";
         fb->query(statement,&index);
         if (index.size()==0) {
-            statement = "INSERT INTO event(name) VALUES ('" + event.split("#")[1] +"')";
+            statement = "INSERT INTO event(name) VALUES ('" + event + "')";
             fb->query(statement);
             statement = "SELECT MAX(id) FROM event";
             fb->query(statement,&index);
@@ -268,23 +268,22 @@ void DoujinmusicParser::trackInsertPrepare(Firebird *fb, QList<int>* albumPostId
     statement = "SELECT unix_time FROM vkpost WHERE id = " + QString::number(albumPostId->at(0));
     fb->query(statement, &unix_time);
     statement = "INSERT INTO ALBUM(title_unic,circle_id,track_count,duration,event_id,vktime) "
-                        "VALUES ('" + album + "'," + QString::number(circle_id) + "," + QString::number(audio_count) + "," + QString::number(duration) + "," + QString::number(event_id) + "," + QString::number(unix_time.at(0)) + ")";
+        "VALUES ('"+album+"',"+QString::number(circle_id)+","+QString::number(audio_count)+","+QString::number(duration)+","+QString::number(event_id)+","+QString::number(unix_time.at(0))+")";
     fb->query(statement);
     statement = "SELECT MAX(id) FROM album";
     fb->query(statement, &index);
     int album_id = index.at(0);
     album_id_global = album_id;
 
-    qDebug() << "STEP 5.5";
     /***********************************DOWNLOAD COVER****************************************/
     QEventLoop loop;
     statement = "SELECT photo_604 FROM vkphoto WHERE id = " + QString::number(albumPostId->at(0));
     if (fb->query(statement, &textList) && textList.size() > 0) {
-        qDebug() << "image url" << textList[0];
+        //qDebug() << "image url" << textList[0];
         QUrl url(textList[0]);
         QNetworkRequest request(url);
         QNetworkAccessManager *manager = new QNetworkAccessManager(this);
-        qDebug() << "DOWNLOAD BEGIN";
+        //qDebug() << "DOWNLOAD BEGIN";
         manager->get(request);
         connect(manager, SIGNAL(finished(QNetworkReply*)), this, SLOT(photoDownloadFinished(QNetworkReply*)));
         connect(this, SIGNAL(photoSaved()), &loop, SLOT(quit()));
@@ -292,15 +291,21 @@ void DoujinmusicParser::trackInsertPrepare(Firebird *fb, QList<int>* albumPostId
 
      /**************************************INSERT TRACK****************************************/
     for (int i = 0; i < albumPostId->size(); i++) {
-        statement = "SELECT vktrack.id FROM vktrack INNER JOIN vkpostxvktrack ON vktrack.id = vkpostxvktrack.vktrack_id WHERE vkpostxvktrack.vkpost_id = " + QString::number(albumPostId->at(i));
+        statement = "SELECT id FROM track WHERE vkpost_id = " + QString::number(albumPostId->at(i));
         fb->query(statement,&index);
-        qDebug() <<"album post id =" << albumPostId->at(i);
+        //qDebug() << "album post id =" << albumPostId->at(i);
         if (index.size()==0) {
             qDebug() << "POST HAS NO TRACKS? break";
             break;
         }
-        for (int j = 0; j < index.size(); j++)
-            trackInsert(fb, index.at(j), album_id, circle_id);
+        for (int j = 0; j < index.size(); j++) {
+            //trackInsert(fb, index.at(j), album_id, circle_id);
+            //statement = "INSERT INTO track(vktrack_id,title_unic,album_id,circle_id,duration) VALUES("+QString::number(vktrack_id)+",'"+track_title+"',"+QString::number(album_id)+","+QString::number(circle_id)+","+QString::number(duration)+")";
+            statement = "UPDATE track SET circle_id = "+QString::number(circle_id)+" WHERE id = "+QString::number(index.at(j));
+            fb->query(statement);
+            statement = "UPDATE track SET album_id = "+QString::number(circle_id)+ " WHERE id = "+QString::number(index.at(j));
+            fb->query(statement);
+        }
     }
 
     loop.exec(); //wait for end download cover
