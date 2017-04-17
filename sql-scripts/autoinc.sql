@@ -25,20 +25,6 @@ END^
 SET TERM ; ^
 
 
-CREATE GENERATOR vktrackInc;
-
-SET TERM ^ ;
-CREATE TRIGGER vktrackInc FOR vktrack ACTIVE
-BEFORE INSERT POSITION 1
-AS
-BEGIN
-    if (new.ID is null) then
-    new.ID = gen_id (vktrackInc, 1);
-END^
-SET TERM ; ^
-
-
-
 CREATE GENERATOR vkphotoInc;
 
 SET TERM ^ ;

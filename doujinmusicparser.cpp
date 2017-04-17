@@ -164,6 +164,8 @@ Bassy - ワンダー・フルワールド.rar1
                 album = mismatch->correctAlbum;
                 disc = mismatch->correctDisc;
                 part = mismatch->correctPart;
+            } else {
+                qDebug() << "Cancel?";
             }
             delete mismatch;
         }

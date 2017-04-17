@@ -2,6 +2,8 @@
 
 #include <QDebug>
 
+//класс переименовать
+
 Firecontrol::Firecontrol(QObject *parent) : QObject(parent)
 {
 
@@ -53,7 +55,7 @@ void Firecontrol::vkpostToDb(Vkpost* vkpost)
     for (int j = 0; j < vkpost->tracks.size(); j++) {
         textPrepare(&vkpost->tracks[j].artist);
         textPrepare(&vkpost->tracks[j].title);
-        statement = "INSERT INTO vktrack(vk_id,to_id,artist,title,vkpost_id) VALUES('"+vkpost->tracks[j].id+"','"+vkpost->tracks[j].owner_id+"','"+vkpost->tracks[j].artist +
+        statement = "INSERT INTO track(vk_id,to_id,artist,title,vkpost_id) VALUES('"+vkpost->tracks[j].id+"','"+vkpost->tracks[j].owner_id+"','"+vkpost->tracks[j].artist +
                                 "','"+vkpost->tracks[j].title+"',"+QString::number(index.at(0))+")";
         fb.query(statement);
     }

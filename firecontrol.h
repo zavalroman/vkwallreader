@@ -6,6 +6,8 @@
 #include "../ibpp/tests/C++/qt-firebird.h"
 #include "vkpost.h"
 
+// класс переименовать
+
 class Firecontrol : public QObject
 {
     Q_OBJECT
