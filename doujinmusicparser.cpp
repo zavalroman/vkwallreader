@@ -126,7 +126,7 @@ Bassy - ワンダー・フルワールド.rar1
         }
         case 3: {
             //re.setPattern("^\\[(.+)\\]\\s+(#[^\\s]+@doujinmusic)\\s*%%(.+)%%(.+)\\s+[-–—]\\s+(.+)\\s?(\\([Pp]art\\s\\d+\\))?.*$");
-            re.setPattern( "^\\[(.+)\\]\\s+(#[^\\s]+@doujinmusic)\\s*%%(.+)%%(.+)\\s+[-–—]\\s+(.+?)\\s*(\\([Pp]art\\s\\d+\\))?\\s*[.]*?$" );
+            re.setPattern( "^\\[(.+)\\]\\s+(#[^\\s]+@doujinmusic)\\s*%%(.+)%%(.+)\\s+[-–—]\\s+(.++)\\s*(\\([Pp]art\\s\\d+\\))?\\s*%?%?(.+)?" );
             match = re.match(post_text);
             if (match.hasMatch()) {
                 event     = match.captured(1);
